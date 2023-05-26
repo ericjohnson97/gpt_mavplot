@@ -44,8 +44,8 @@ class PlotCreator:
 
     @staticmethod
     def extract_code_snippets(text):
-        pattern = r'```(.*?)```'
-        snippets = re.findall(pattern, text, re.DOTALL)
+        pattern = r'```.*?\n(.*?)```'
+        snippets = re.findall(pattern, text, re.DOTALL | re.MULTILINE)
         if len(snippets) == 0:
             snippets = [text]
         return snippets
@@ -76,6 +76,7 @@ class PlotCreator:
 
         # run the script 
         os.system("python plot.py")
+        return code
 
     def create_plot(self, human_input):
         file = "data/2023-01-04 20-51-25.tlog"
@@ -95,9 +96,9 @@ class PlotCreator:
             subprocess.check_output(["python", "plot.py"], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
-            self.attempt_to_fix_sctript("plot.py", e.output.decode())
+            code = self.attempt_to_fix_sctript("plot.py", e.output.decode())
         except Exception as e:
             print(e)
-            self.attempt_to_fix_sctript("plot.py", str(e))
+            code = self.attempt_to_fix_sctript("plot.py", str(e))
 
-        return ("plot.png", None)
+        return [("plot.png", None), code[0]]

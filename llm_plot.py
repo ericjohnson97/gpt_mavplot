@@ -18,15 +18,16 @@ def bot(history):
     # Check if it is a string
     if isinstance(user_input, str):
         # Generate the plot
-        img = plot_creator.create_plot(user_input)
-        response = img
+        response = plot_creator.create_plot(user_input)
     else:
         response = "**That's cool!**"
 
-    history[-1][1] = ('plot.png', None)
+    history[-1][1] = response[0]
+    history = history + [(None, f"Here is the code used to generate the plot:\n```\n{response[1]}```")]
     return history
 
 with gr.Blocks() as demo:
+    gr.Markdown("# GPT MAVPlot\n\nThis web-based tool allows users to upload mavlink tlogs in which the chat bot will use to generate plots from. It does this by creating a python script using pymavlink and matplotlib. The output includes the plot and the code used to generate it. ")
     chatbot = gr.Chatbot([], elem_id="chatbot").style(height=750)
     
     with gr.Row():
