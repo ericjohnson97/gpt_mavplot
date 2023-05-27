@@ -27,9 +27,8 @@ def bot(history):
 
         print(history)
 
-        history_str = format_history(history)
-        response = plot_creator.create_plot(user_input, history_str)
-        print(response)
+        # history_str = format_history(history)
+        response = plot_creator.create_plot(user_input)
         history[-1][1] = response[0]
         history = history + [(None, f"Here is the code used to generate the plot:")]
         history = history + [(None, f"{response[1]}")]
@@ -41,7 +40,10 @@ def bot(history):
         filename, extension = os.path.splitext(os.path.basename(file_path))
         
         history[-1][0] = f"user uploaded file: {filename}{extension}"
-        history[-1][1] = "I will be using the file you uploaded to generate the plot. Please describe the plot you would like to generate."
+        history[-1][1] = "processing file..."
+        data_types = plot_creator.parse_mavlink_log()
+        history = history + [(None, f"here are the data types in the log {data_types}")]
+        history = history + [(None, f"I am done processing the file. Now you can ask me to generate a plot.")]
     
     return history
 
