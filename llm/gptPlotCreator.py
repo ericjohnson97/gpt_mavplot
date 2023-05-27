@@ -19,13 +19,19 @@ from PIL import Image
 
 
 class PlotCreator:
+
+    last_code = ""
+
     def __init__(self):
         load_dotenv()
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", max_tokens=2000, temperature=0)
+        self.model = os.getenv("OPENAI_MODEL")
+        # llm = ChatOpenAI(model_name="gpt-3.5-turbo", max_tokens=2000, temperature=0)
+        llm = ChatOpenAI(model_name=self.model, max_tokens=2000, temperature=0)
+
         
         mavlink_data_prompt = PromptTemplate(
-            input_variables=["human_input", "file"],
-            template="You are an AI conversation agent that will be used for generating python scripts to plot mavlink data provided by the user. Please create a python script using matplotlib and pymavlink's mavutil to plot the data provided by the user. Please do not explain the code just return the script. Please plot each independent variable over time in seconds. Please save the plot to file named plot.png with at least 400 dpi. \n\nHUMAN: {human_input} \n\nplease read this data from the file {file}.",
+            input_variables=["history", "human_input", "file"],
+            template="You are an AI conversation agent that will be used for generating python scripts to plot mavlink data provided by the user. Please create a python script using matplotlib and pymavlink's mavutil to plot the data provided by the user. Please do not explain the code just return the script. Please plot each independent variable over time in seconds. Please save the plot to file named plot.png in the same directory as plot.py with at least 400 dpi. Also be careful not to write a script that gets stuck in an endless loop.\n\nChat History:\n{history} \n\nHUMAN: {human_input} \n\nplease read this data from the file {file}.",
         )
         self.chain = LLMChain(verbose=True, llm=llm, prompt=mavlink_data_prompt)
 
@@ -55,13 +61,13 @@ class PlotCreator:
         with open(filename, 'w') as file:
             file.write(text)
 
-    @staticmethod
-    def attempt_to_fix_sctript(filename, error_message):
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", max_tokens=2000, temperature=0)
+    def attempt_to_fix_sctript(self, filename, error_message):
+        # llm = ChatOpenAI(model_name="gpt-3.5-turbo", max_tokens=2000, temperature=0)
+        llm = ChatOpenAI(model_name=self.model , max_tokens=2000, temperature=0)
 
         fix_plot_script_template = PromptTemplate(
             input_variables=["error", "script"],
-            template="You are an AI agent that is designed to debug scripts created to plot mavlink data using matplotlib and pymavlink's mavutil. the following script produced this error: \n\n{script}\n\nThe error is: \n\n{error}\n\nPlease fix the script so that it produces the correct plot.",
+            template="You are an AI agent that is designed to debug scripts created to plot mavlink data using matplotlib and pymavlink's mavutil. the following script produced this error: \n\n{script}\n\nThe error is: \n\n{error}\n\nPlease fix the script so that it produces the correct plot. please return the fixed script in a markdown code block.",
         )
 
         # read script from file
@@ -75,16 +81,22 @@ class PlotCreator:
         PlotCreator.write_plot_script("plot.py", code[0])
 
         # run the script 
-        os.system("python plot.py")
+        try:
+            subprocess.check_output(["python", "plot.py"], stderr=subprocess.STDOUT)
+        except:
+            code[0] = "Sorry I was unable to fix the script.\nThis is my attempt to fix it:\n\n" + code[0]
         return code
 
-    def create_plot(self, human_input):
-        file = "data/2023-01-04 20-51-25.tlog"
+    def set_logfile_name(self, filename):
+        self.logfile_name = filename
 
-        # prompt the user for the what plot they would like to generate
-        # human_input = input("Please enter a description of the plot you would like to generate: ")
+    def create_plot(self, human_input, history):
 
-        response = self.chain.run({"file": file, "human_input": human_input})
+        if self.last_code != "":
+            history = history + "\n\nLast script generated:\n\n" + self.last_code
+
+
+        response = self.chain.run({"history" : history, "file": self.logfile_name, "human_input": human_input})
         print(response)
 
         # parse the code from the response 
@@ -100,5 +112,7 @@ class PlotCreator:
         except Exception as e:
             print(e)
             code = self.attempt_to_fix_sctript("plot.py", str(e))
+
+        self.last_code = code[0]
 
         return [("plot.png", None), code[0]]
