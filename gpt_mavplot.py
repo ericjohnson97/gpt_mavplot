@@ -23,15 +23,25 @@ def bot(history):
 
     # Check if it is a string
     if isinstance(user_input, str):
-        # Generate the plot
+        
+        history[-1][1] = "I am figuring out what data types are relevant for the plot...\n"
+        yield history
+        data_types_str = plot_creator.find_relevant_data_types(user_input)
 
-        print(history)
-
-        # history_str = format_history(history)
-        response = plot_creator.create_plot(user_input)
-        history[-1][1] = response[0]
+        history[-1][1] += "I am now generating a script to plot the data...\n"
+        yield history
+        plot_creator.create_plot(user_input, data_types_str)
+        
+        history[-1][1] += "I am now running the script I just Generated...\n"
+        yield history
+        response = plot_creator.run_script()
+        
         history = history + [(None, f"Here is the code used to generate the plot:")]
         history = history + [(None, f"{response[1]}")]
+        history = history + response[0]
+        
+        
+        yield history
     else:
         file_path = user_input[0]
         plot_creator.set_logfile_name(file_path)
@@ -41,10 +51,12 @@ def bot(history):
         
         history[-1][0] = f"user uploaded file: {filename}{extension}"
         history[-1][1] = "processing file..."
+        yield history
+
         data_types = plot_creator.parse_mavlink_log()
-        history = history + [(None, f"here are the data types in the log {data_types}")]
         history = history + [(None, f"I am done processing the file. Now you can ask me to generate a plot.")]
-    
+        yield history
+
     return history
 
 
@@ -59,7 +71,7 @@ with gr.Blocks() as demo:
                 placeholder="Enter text and press enter, or upload an image",
             ).style(container=False)
         with gr.Column(scale=0.15, min_width=0):
-            btn = gr.UploadButton("📁", file_types=["image", "video", "audio"])
+            btn = gr.UploadButton("📁", file_types=["file"])
             
     txt.submit(add_text, [chatbot, txt], [chatbot, txt]).then(
         bot, chatbot, chatbot
@@ -69,4 +81,5 @@ with gr.Blocks() as demo:
     )
 
 if __name__ == "__main__":
+    demo.queue()
     demo.launch()

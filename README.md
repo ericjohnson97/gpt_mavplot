@@ -10,20 +10,32 @@ MAVPlot is a Python-based project which uses Gradio as an interface and GPT-X po
 
 ## Installation
 
-1. Clone the repository:
+Clone the repository:
 
 ```shell
 git clone https://github.com/yourusername/mavplot.git
 ```
 
-TODO
-2. Install the requirements:
+Setup Python Virtual Environment:
+
+```shell
+python3 -m venv .venv
+```
+
+Activate the virtual environment:
+
+```shell
+source .venv/bin/activate
+```
+
+
+Install the requirements:
 
 ```shell
 pip install -r requirements.txt
 ```
 
-3. Setup .env File 
+Setup .env File 
 
 Copy the `template.env` file to a file named `.env` in your root directory. Add your Openai API key to the file  
 

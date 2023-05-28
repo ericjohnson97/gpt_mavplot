@@ -136,19 +136,7 @@ class PlotCreator:
         """
         self.logfile_name = filename
 
-    def create_plot(self, human_input):
-        """
-        Create a plot based on the input provided by the human.
-        
-        :param human_input: Input provided by the human.
-        :type human_input: str
-        """
-        # Create a history of generated scripts if one exists
-        if self.last_code != "":
-            history = "\n\nLast script generated:\n\n" + self.last_code
-        else:
-            history = ""
-
+    def find_relevant_data_types(self, human_input):
         # Search the database for documents that are similar to the human input
         docs = self.db.similarity_search(human_input)
 
@@ -156,8 +144,41 @@ class PlotCreator:
         data_type_info_text = ""
         for doc in docs:
             data_type_info_text += doc.page_content + "\n\n"
+        
+        return data_type_info_text
 
-        print(docs)
+    def run_script(self):
+        # Run the script and if it doesn't work, capture the output and call attempt_to_fix_script
+        try:
+            subprocess.check_output(["python", "plot.py"], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode())
+            code = self.attempt_to_fix_sctript("plot.py", e.output.decode())
+            self.last_code = code[0]
+
+        except Exception as e:
+            print(e)
+            code = self.attempt_to_fix_sctript("plot.py", str(e))
+            self.last_code = code[0]
+
+
+        # Return a list containing the filename of the plot and the code used to generate it
+        return [[(None, ("plot.png",))], self.last_code]
+
+    def create_plot(self, human_input, data_type_info_text):
+        """
+        Create a plot based on the input provided by the human.
+        
+        :param human_input: Input provided by the human.
+        :type human_input: str
+        """
+
+        # Create a history of generated scripts if one exists
+        if self.last_code != "":
+            history = "\n\nLast script generated:\n\n" + self.last_code
+        else:
+            history = ""
+
 
         # Generate a response by running the chain with the relevant data types, history, file name and human input
         response = self.chain.run({"data_types" : data_type_info_text, "history" : history, "file": self.logfile_name, "human_input": human_input})
@@ -169,21 +190,11 @@ class PlotCreator:
         # Write the code to a file named "plot.py"
         self.write_plot_script("plot.py", code[0])
 
-        # Run the script and if it doesn't work, capture the output and call attempt_to_fix_script
-        try:
-            subprocess.check_output(["python", "plot.py"], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            print(e.output.decode())
-            code = self.attempt_to_fix_sctript("plot.py", e.output.decode())
-        except Exception as e:
-            print(e)
-            code = self.attempt_to_fix_sctript("plot.py", str(e))
-
         # Store the code for the next iteration
         self.last_code = code[0]
 
-        # Return a list containing the filename of the plot and the code used to generate it
-        return [("plot.png", None), code[0]]
+
+        return code[0]
 
 
     def parse_mavlink_log(self):
