@@ -1,3 +1,14 @@
+---
+title: GPT MAVPlot
+emoji: 🚁
+colorFrom: yellow
+colorTo: pink
+sdk: gradio
+sdk_version: 3.29.0
+app_file: app.py
+pinned: false
+---
+
 # GPT_MAVPlot
 
 MAVPlot is a Python-based project which uses Gradio as an interface and GPT-X powered by OpenAI as a chatbot to generate and plot MAVLink data. It provides an easy-to-use, chatbot-like interface for users to describe the plot they would like to generate.
