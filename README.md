@@ -13,6 +13,8 @@ pinned: false
 
 MAVPlot is a Python-based project which uses Gradio as an interface and GPT-X powered by OpenAI as a chatbot to generate and plot MAVLink data. It provides an easy-to-use, chatbot-like interface for users to describe the plot they would like to generate.
 
+Demo is available at: https://huggingface.co/spaces/ericjohnson97/gpt_mavplot
+
 ![chat bot](docs/chat_bot_if.PNG)
 
 ## Architecture
@@ -55,7 +57,7 @@ Copy the `template.env` file to a file named `.env` in your root directory. Add 
 After installing all dependencies, run the main script using:
 
 ```shell
-python gpt_mavplot.py
+python app.py
 ```
 
 A web-based Gradio interface will launch. You can upload a mavlink tlog then prompt the bot to generate plots from the log. The chatbot will process your request and generate the corresponding plot, which will be displayed in the chat interface. The script use to generate the log will also be posted to the chat interface. 

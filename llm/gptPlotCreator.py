@@ -44,8 +44,8 @@ class PlotCreator:
 
         # define the input variables and template for the prompt to generate Python scripts
         mavlink_data_prompt = PromptTemplate(
-            input_variables=["data_types", "history", "human_input", "file"],
-            template="You are an AI conversation agent that will be used for generating python scripts to plot mavlink data provided by the user. Please create a python script using matplotlib and pymavlink's mavutil to plot the data provided by the user. Please do not explain the code just return the script. Please plot each independent variable over time in seconds. Please save the plot to file named plot.png in the same directory as plot.py with at least 400 dpi. please use blocking=false in your call to recv_match and be sure to break the loop if a msg in None. here are the relevant data types in the log:\n\n{data_types} \n\nChat History:\n{history} \n\nHUMAN: {human_input} \n\nplease read this data from the file {file}.",
+            input_variables=["data_types", "history", "human_input", "file", "output_file"],
+            template="You are an AI conversation agent that will be used for generating python scripts to plot mavlink data provided by the user. Please create a python script using matplotlib and pymavlink's mavutil to plot the data provided by the user. Please do not explain the code just return the script. Please plot each independent variable over time in seconds. Please save the plot to file named {output_file} with at least 400 dpi. please use blocking=false in your call to recv_match and be sure to break the loop if a msg in None. here are the relevant data types in the log:\n\n{data_types} \n\nChat History:\n{history} \n\nHUMAN: {human_input} \n\nplease read this data from the file {file}.",
         )
 
         # create an instance of LLMChain with the defined prompt and verbosity
@@ -122,7 +122,7 @@ class PlotCreator:
 
         # run the fixed script 
         try:
-            subprocess.check_output(["python", "plot.py"], stderr=subprocess.STDOUT)
+            subprocess.check_output(["python", self.script_path], stderr=subprocess.STDOUT)
         except:
             code[0] = "Sorry I was unable to fix the script.\nThis is my attempt to fix it:\n\n" + code[0]
         return code
@@ -134,7 +134,13 @@ class PlotCreator:
         :param filename: The name of the log file.
         :type filename: str
         """
+        # extract the path to the log file
+
+        path = os.path.dirname(filename)
         self.logfile_name = filename
+        self.script_path = os.path.join(path, "plot.py")
+        self.plot_path = os.path.join(path, "plot.png")
+
 
     def find_relevant_data_types(self, human_input):
         # Search the database for documents that are similar to the human input
@@ -150,20 +156,20 @@ class PlotCreator:
     def run_script(self):
         # Run the script and if it doesn't work, capture the output and call attempt_to_fix_script
         try:
-            subprocess.check_output(["python", "plot.py"], stderr=subprocess.STDOUT)
+            subprocess.check_output(["python", self.script_path], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
-            code = self.attempt_to_fix_sctript("plot.py", e.output.decode())
+            code = self.attempt_to_fix_sctript(self.script_path, e.output.decode())
             self.last_code = code[0]
 
         except Exception as e:
             print(e)
-            code = self.attempt_to_fix_sctript("plot.py", str(e))
+            code = self.attempt_to_fix_sctript(self.script_path, str(e))
             self.last_code = code[0]
 
 
         # Return a list containing the filename of the plot and the code used to generate it
-        return [[(None, ("plot.png",))], self.last_code]
+        return [[(None, (self.plot_path,))], self.last_code]
 
     def create_plot(self, human_input, data_type_info_text):
         """
@@ -181,14 +187,14 @@ class PlotCreator:
 
 
         # Generate a response by running the chain with the relevant data types, history, file name and human input
-        response = self.chain.run({"data_types" : data_type_info_text, "history" : history, "file": self.logfile_name, "human_input": human_input})
+        response = self.chain.run({"data_types" : data_type_info_text, "history" : history, "file": self.logfile_name, "human_input": human_input, "output_file": self.plot_path})
         print(response)
 
         # Parse the code from the response 
         code = self.extract_code_snippets(response)
 
         # Write the code to a file named "plot.py"
-        self.write_plot_script("plot.py", code[0])
+        self.write_plot_script(self.script_path, code[0])
 
         # Store the code for the next iteration
         self.last_code = code[0]
