@@ -1,0 +1,6 @@
+.env
+*.pyc
+plot.py
+plot.png
+.venv
+.chroma
