@@ -69,3 +69,8 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
+
+## Lessons Learned (So Far)
+
+- At first I hoped that I could simply engineer a prompt to generate plots of the logs. This worked about 50 percent of the time or less. It seems that bot gpt 3.5 and 4 (which I also tested with) do not have enough knowledge of the exact MAVLink messages to reliably generate the plots. To combat this I added the preprocessing step. This parses the log and finds all the unique message structures. From there they are embedded and stored in a chromaDB vector database. Possibly relevant message structures are recalled from the prompt the user provides and passed to the query to OpenAI. This seems to work very reliably for me. 
