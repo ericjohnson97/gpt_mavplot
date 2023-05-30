@@ -2,15 +2,15 @@ import gradio as gr
 import os
 from llm.gptPlotCreator import PlotCreator
 
-plot_creator = PlotCreator()
 
 def add_text(history, text, plot_creator):
     history = history + [(text, None)]
     return history, plot_creator, "" 
 
 def add_file(history, file, plot_creator):
-    print(type(plot_creator))
+    print(file.name)
     history = history + [((file.name,), None)]
+    plot_creator.set_logfile_name(file.name)
     return history, plot_creator
 
 def format_history(history):
@@ -24,7 +24,7 @@ def bot(history, plot_creator):
     print(type(plot_creator))
 
     # Check if it is a string
-    if isinstance(user_input, str):
+    if isinstance(user_input, str) and  plot_creator.logfile_name != "":
         
         history[-1][1] = "I am figuring out what data types are relevant for the plot...\n"
         yield history, plot_creator
@@ -44,6 +44,8 @@ def bot(history, plot_creator):
         
         
         yield history, plot_creator
+    elif not plot_creator.logfile_name:
+        yield history + [(None, "Please upload a log file before attempting to create a plot.")], plot_creator
     else:
         plot_creator = PlotCreator() # access the state variable through `.value`
         file_path = user_input[0]
@@ -80,7 +82,6 @@ with gr.Blocks() as demo:
         with gr.Column(scale=0.15, min_width=0):
             btn = gr.UploadButton("📁", file_types=["file"])
     
-    var = "test"
 
     txt.submit(add_text, [chatbot, txt, plot_creator], [chatbot, plot_creator, txt]).then(
         bot, [chatbot, plot_creator], [chatbot, plot_creator]

@@ -29,6 +29,9 @@ class PlotCreator:
     """
 
     last_code = ""  # stores the last code generated
+    logfile_name = ""
+    script_path = ""
+    plot_path = ""
 
     def __init__(self):
         """
@@ -45,7 +48,7 @@ class PlotCreator:
         # define the input variables and template for the prompt to generate Python scripts
         mavlink_data_prompt = PromptTemplate(
             input_variables=["data_types", "history", "human_input", "file", "output_file"],
-            template="You are an AI conversation agent that will be used for generating python scripts to plot mavlink data provided by the user. Please create a python script using matplotlib and pymavlink's mavutil to plot the data provided by the user. Please do not explain the code just return the script. Please plot each independent variable over time in seconds. Please save the plot to file named {output_file} with at least 400 dpi. please use blocking=false in your call to recv_match and be sure to break the loop if a msg in None. here are the relevant data types in the log:\n\n{data_types} \n\nChat History:\n{history} \n\nHUMAN: {human_input} \n\nplease read this data from the file {file}.",
+            template="You are an AI conversation agent that will be used for generating python scripts to plot mavlink data provided by the user. Please create a python script using matplotlib and pymavlink's mavutil to plot the data provided by the user. Please do not explain the code just return the script. Please plot each independent variable over time in seconds. Please save the plot to file named {output_file} with at least 400 dpi and do not call plt.show(). please use blocking=false in your call to recv_match and be sure to break the loop if a msg in None. here are the relevant data types in the log:\n\n{data_types} \n\nChat History:\n{history} \n\nHUMAN: {human_input} \n\nplease read this data from the file {file}.",
         )
 
         # create an instance of LLMChain with the defined prompt and verbosity
