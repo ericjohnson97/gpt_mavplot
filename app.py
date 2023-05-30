@@ -62,11 +62,14 @@ def bot(history, plot_creator):
 
     return history, plot_creator
 
+initial_message = (None, "Hello! I am a chat bot designed to plot logs from drones. To get started, please upload a log file. Then ask me to generate a plot! If you need an example log you can download one from here: https://drive.google.com/file/d/1BKv-NbSvYQz9XqqmyOyOhe3o4PAFDyZa/view?usp=sharing")
 
 with gr.Blocks() as demo:
     gr.Markdown("# GPT MAVPlot\n\nThis web-based tool allows users to upload mavlink tlogs in which the chat bot will use to generate plots from. It does this by creating a python script using pymavlink and matplotlib. The output includes the plot and the code used to generate it. ")
     plot_creator = gr.State(PlotCreator())
-    chatbot = gr.Chatbot([], elem_id="chatbot").style(height=750)
+    
+    chatbot = gr.Chatbot([initial_message], elem_id="chatbot").style(height=750)
+
     
     with gr.Row():
         with gr.Column(scale=0.85):
